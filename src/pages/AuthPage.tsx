@@ -24,6 +24,7 @@ export default function AuthPage() {
   const [displayName, setDisplayName] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [remember, setRemember] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -42,11 +43,13 @@ export default function AuthPage() {
           email: email.trim(),
           displayName: displayName.trim(),
           password,
+          remember,
         })
       } else {
         await login({
           identifier: identifier.trim(),
           password,
+          remember,
           deviceName: 'MikosChat Web',
         })
       }
@@ -235,6 +238,16 @@ export default function AuthPage() {
                 </p>
               )}
             </div>
+
+            <label className="flex items-center gap-3 text-sm cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={e => setRemember(e.target.checked)}
+                className="w-4 h-4 accent-primary"
+              />
+              Zapamiętaj mnie
+            </label>
 
             <button
               type="submit"
