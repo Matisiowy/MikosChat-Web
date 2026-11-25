@@ -7,6 +7,7 @@ import type {
   Conversation,
   Message,
   MessageHistory,
+  MessageSearchResult,
   Presence,
 } from '../types/chat'
 
@@ -83,6 +84,19 @@ export const chatApi = {
     const { data } = await api.get<MessageHistory>(
       `/conversations/${conversationId}/messages`,
       { params: { cursor, limit: 50 } }
+    )
+    return data
+  },
+
+  async searchMessages(
+    conversationId: string,
+    q: string,
+    limit = 30,
+    signal?: AbortSignal,
+  ) {
+    const { data } = await api.get<MessageSearchResult>(
+      `/conversations/${conversationId}/messages/search`,
+      { params: { q, limit }, signal }
     )
     return data
   },

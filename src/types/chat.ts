@@ -110,3 +110,8 @@ export interface Presence {
   online: boolean
   lastSeenAt: string | null
 }
+
+export interface MessageSearchResult {
+  items: Message[]
+  hasMore: boolean
+}
