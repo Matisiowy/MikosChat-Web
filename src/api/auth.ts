@@ -1,4 +1,14 @@
-import { api, publicApi } from './client'
+import {
+  api,
+  publicApi,
+  refreshSession,
+} from './client'
+
+import {
+  withSessionLock,
+  announceSessionChange,
+} from './session-lock'
+
 import { useAuthStore } from '../stores/auth.store'
 
 import type {
@@ -9,39 +19,56 @@ import type {
 } from '../types/auth'
 
 export async function login(input: LoginData) {
-  const { data } = await publicApi.post<AuthResponse>(
-    '/auth/login',
-    input,
-  )
+  return withSessionLock(async () => {
+    const { data } = await publicApi.post<AuthResponse>(
+      '/auth/web/login',
+      input,
+    )
 
-  useAuthStore.getState().setSession(data)
+    useAuthStore.getState().setSession(data)
+    announceSessionChange()
 
-  return data
+    return data
+  })
 }
 
 export async function register(input: RegisterData) {
-  const { data } = await publicApi.post<AuthResponse>(
-    '/auth/register',
-    input,
-  )
+  return withSessionLock(async () => {
+    const { data } = await publicApi.post<AuthResponse>(
+      '/auth/web/register',
+      input,
+    )
 
-  useAuthStore.getState().setSession(data)
+    useAuthStore.getState().setSession(data)
+    announceSessionChange()
 
-  return data
+    return data
+  })
+}
+
+export async function restoreSession() {
+  await refreshSession()
 }
 
 export async function getMe() {
+  const sessionId = useAuthStore.getState().sessionId
+
   const { data } = await api.get<User>('/auth/me')
 
-  useAuthStore.getState().setUser(data)
+  if (
+    useAuthStore.getState().sessionId === sessionId
+  ) {
+    useAuthStore.getState().setUser(data)
+  }
 
   return data
 }
 
 export async function logout() {
-  try {
-    await api.post('/auth/logout')
-  } finally {
+  await withSessionLock(async () => {
+    await publicApi.post('/auth/web/logout')
+
     useAuthStore.getState().clearSession()
-  }
+    announceSessionChange()
+  })
 }

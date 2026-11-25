@@ -1,5 +1,8 @@
 import axios from 'axios'
 import { useAuthStore } from '../stores/auth.store'
+import { withSessionLock } from './session-lock'
+
+import type { AuthResponse } from '../types/auth'
 
 import type {
   AxiosError,
@@ -8,52 +11,71 @@ import type {
 
 interface RetryConfig extends InternalAxiosRequestConfig {
   _retry?: boolean
+  _sessionId?: string | null
 }
 
 export const publicApi = axios.create({
   baseURL: '/api/v1',
   timeout: 15000,
+  withCredentials: true,
 })
 
 export const api = axios.create({
   baseURL: '/api/v1',
   timeout: 15000,
+  withCredentials: true,
 })
 
 let refreshPromise: Promise<string> | null = null
 
 api.interceptors.request.use(config => {
-  const token = useAuthStore.getState().accessToken
+  const state = useAuthStore.getState()
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+  if (state.accessToken) {
+    config.headers.Authorization =
+      `Bearer ${state.accessToken}`
   }
+
+  const request = config as RetryConfig
+  request._sessionId = state.sessionId
 
   return config
 })
 
-async function refreshSession(): Promise<string> {
-  const store = useAuthStore.getState()
-  const refreshToken = store.refreshToken
-
-  if (!refreshToken) {
-    throw new Error('No active session')
+export function refreshSession(): Promise<string> {
+  if (refreshPromise) {
+    return refreshPromise
   }
 
-  const { data } = await publicApi.post('/auth/refresh', {
-    refreshToken,
+  refreshPromise = withSessionLock(async () => {
+    const previous = useAuthStore.getState()
+
+    try {
+      const { data } =
+        await publicApi.post<AuthResponse>(
+          '/auth/web/refresh',
+        )
+
+      useAuthStore.getState().setSession(data)
+
+      return data.accessToken
+    } catch (error) {
+      if (
+        axios.isAxiosError(error) &&
+        error.response?.status === 401 &&
+        useAuthStore.getState().sessionId ===
+          previous.sessionId
+      ) {
+        useAuthStore.getState().clearSession()
+      }
+
+      throw error
+    }
+  }).finally(() => {
+    refreshPromise = null
   })
 
-  if (useAuthStore.getState().refreshToken !== refreshToken) {
-    throw new Error('Session changed')
-  }
-
-  useAuthStore.getState().setTokens(
-    data.accessToken,
-    data.refreshToken,
-  )
-
-  return data.accessToken
+  return refreshPromise
 }
 
 api.interceptors.response.use(
@@ -74,38 +96,33 @@ api.interceptors.response.use(
 
     const current = useAuthStore.getState()
 
-    if (!current.refreshToken) {
+    if (
+      !current.sessionId ||
+      config._sessionId !== current.sessionId
+    ) {
       return Promise.reject(error)
     }
 
-    const originalRefreshToken = current.refreshToken
+    const originalSessionId = current.sessionId
 
     try {
       if (
-        current.accessToken &&
-        config.headers.Authorization !==
+        !current.accessToken ||
+        config.headers.Authorization ===
           `Bearer ${current.accessToken}`
       ) {
-        return api(config)
+        await refreshSession()
       }
 
-      if (!refreshPromise) {
-        refreshPromise = refreshSession().finally(() => {
-          refreshPromise = null
-        })
+      if (
+        useAuthStore.getState().sessionId !==
+          originalSessionId
+      ) {
+        throw new Error('Session changed')
       }
-
-      await refreshPromise
 
       return api(config)
     } catch (refreshError) {
-      if (
-        useAuthStore.getState().refreshToken ===
-        originalRefreshToken
-      ) {
-        useAuthStore.getState().clearSession()
-      }
-
       return Promise.reject(refreshError)
     }
   },
@@ -118,7 +135,7 @@ export function getApiError(error: unknown): string {
     }
 
     if (error.response?.status === 401) {
-      return 'Nieprawidłowy login lub hasło.'
+      return 'Nieprawidłowe dane logowania lub wygasła sesja.'
     }
 
     const message = error.response?.data?.message
