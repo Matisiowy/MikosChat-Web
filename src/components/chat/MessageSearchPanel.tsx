@@ -1,3 +1,4 @@
+import SearchHighlight from './SearchHighlight'
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -188,7 +189,10 @@ export default function MessageSearchPanel({
                   </div>
 
                   <p className="text-sm mt-1 whitespace-pre-wrap break-words">
-                    {message.content}
+                    <SearchHighlight
+                      text={message.content ?? ''}
+                      query={query}
+                    />
                   </p>
 
                   <time
