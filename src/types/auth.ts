@@ -13,16 +13,19 @@ export interface User {
 export interface AuthResponse {
   user: User
   accessToken: string
-  refreshToken: string
+  sessionId: string
+  expiresIn: number
 }
 
 export interface LoginData {
+  remember?: boolean
   identifier: string
   password: string
   deviceName?: string
 }
 
 export interface RegisterData {
+  remember?: boolean
   username: string
   email: string
   displayName: string
