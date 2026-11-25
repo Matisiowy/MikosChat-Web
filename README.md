@@ -1,5 +1,12 @@
 # MikosChat Web
 
+[![CI](https://github.com/Matisiowy/MikosChat-Web/actions/workflows/ci.yml/badge.svg)](https://github.com/Matisiowy/MikosChat-Web/actions)
+[![Release](https://img.shields.io/github/v/release/Matisiowy/MikosChat-Web?include_prereleases)](https://github.com/Matisiowy/MikosChat-Web/releases)
+[![License](https://img.shields.io/github/license/Matisiowy/MikosChat-Web)](https://github.com/Matisiowy/MikosChat-Web/blob/main/LICENSE)
+[![Stars](https://img.shields.io/github/stars/Matisiowy/MikosChat-Web)](https://github.com/Matisiowy/MikosChat-Web/stargazers)
+[![Issues](https://img.shields.io/github/issues/Matisiowy/MikosChat-Web)](https://github.com/Matisiowy/MikosChat-Web/issues)
+
+
 ![Version](https://img.shields.io/badge/version-0.8.0-7367f0)
 ![License](https://img.shields.io/badge/license-AGPL--3.0-blue)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
