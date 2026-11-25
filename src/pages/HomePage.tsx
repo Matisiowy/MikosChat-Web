@@ -1,3 +1,4 @@
+import MessageSearchPanel from '../components/chat/MessageSearchPanel'
 import MuteConversation from '../components/chat/MuteConversation'
 import GroupDetailsPanel from '../components/groups/GroupDetailsPanel'
 import CreateGroupDialog from '../components/groups/CreateGroupDialog'
@@ -13,6 +14,7 @@ import {
   Wifi,
   WifiOff,
   Info,
+  Search,
 } from 'lucide-react'
 
 import NavigationRail from '../components/sidebar/NavigationRail'
@@ -43,6 +45,7 @@ export default function HomePage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [createGroupOpen, setCreateGroupOpen] = useState(false)
   const [groupDetailsOpen, setGroupDetailsOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
 
 
   const conversation = useQuery({
@@ -94,9 +97,11 @@ export default function HomePage() {
 
   useEffect(() => {
     setGroupDetailsOpen(false)
+    setSearchOpen(false)
   }, [selectedId])
 
   function selectConversation(id: string) {
+    setSearchOpen(false)
     setGroupDetailsOpen(false)
     setSelectedId(id)
     setTab('chats')
@@ -206,13 +211,36 @@ export default function HomePage() {
                 />
               )}
 
+              {conversation.data && (
+                <button
+                  type="button"
+                  title="Wyszukaj w rozmowie"
+                  aria-label="Wyszukaj w rozmowie"
+                  aria-expanded={searchOpen}
+                  onClick={() => {
+                    setGroupDetailsOpen(false)
+                    setSearchOpen(current => !current)
+                  }}
+                  className={`w-9 h-9 shrink-0 rounded-xl flex items-center justify-center transition-colors ${
+                    searchOpen
+                      ? 'bg-primary/15 text-primary-hover'
+                      : 'text-muted hover:bg-surface'
+                  }`}
+                >
+                  <Search size={21} />
+                </button>
+              )}
+
               {conversation.data?.type === 'GROUP' && (
                 <button
                   type="button"
                   title="Informacje o grupie"
                   aria-label="Informacje o grupie"
                   aria-expanded={groupDetailsOpen}
-                  onClick={() => setGroupDetailsOpen(current => !current)}
+                  onClick={() => {
+                    setSearchOpen(false)
+                    setGroupDetailsOpen(current => !current)
+                  }}
                   className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
                     groupDetailsOpen
                       ? 'bg-primary/15 text-primary-hover'
@@ -279,6 +307,27 @@ export default function HomePage() {
         )}
 
       </section>
+
+      {selectedId &&
+        searchOpen &&
+        conversation.data &&
+        !conversation.isError && (
+          <>
+            <button
+              type="button"
+              aria-label="Zamknij panel wyszukiwania"
+              onClick={() => setSearchOpen(false)}
+              className="fixed inset-0 bg-black/50 z-30 xl:hidden"
+            />
+
+            <MessageSearchPanel
+              key={selectedId}
+              conversationId={selectedId}
+              userId={user.id}
+              onClose={() => setSearchOpen(false)}
+            />
+          </>
+        )}
 
       {selectedId &&
         groupDetailsOpen &&
