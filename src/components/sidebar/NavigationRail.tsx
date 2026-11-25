@@ -94,7 +94,13 @@ export default function NavigationRail({
       <button
         title="Wyloguj się"
         aria-label="Wyloguj się"
-        onClick={() => void logout().catch(console.error)}
+        onClick={() => {
+          void logout().catch(() => {
+            window.alert(
+              'Nie udało się wylogować. Sprawdź połączenie i spróbuj ponownie.',
+            )
+          })
+        }}
         className="w-11 h-11 flex items-center justify-center text-muted hover:text-danger rounded-xl hover:bg-surface"
       >
         <LogOut size={20} />
