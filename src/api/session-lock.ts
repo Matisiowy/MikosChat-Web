@@ -21,8 +21,12 @@ export function withSessionLock<T>(
 }
 
 export function announceSessionChange() {
-  localStorage.setItem(
-    'mikoschat-session-event',
-    crypto.randomUUID(),
-  )
+  try {
+    localStorage.setItem(
+      'mikoschat-session-event',
+      crypto.randomUUID(),
+    )
+  } catch {
+    // Storage may be disabled by browser privacy settings.
+  }
 }
